@@ -1543,19 +1543,32 @@ if (typeof window !== 'undefined') {
     }
 }
 
+// Export the instance for immediate use (Universal)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { 
         CommandsRuntime, 
         initializeCMMANDS,
         getInstance: () => cmmandsInstance
     };
-    console.log('📦 CMMANDS loaded for Node.js/CommonJS');
 }
-
 if (typeof exports !== 'undefined') {
     exports.CommandsRuntime = CommandsRuntime;
     exports.initializeCMMANDS = initializeCMMANDS;
     exports.getInstance = () => cmmandsInstance;
+}
+if (typeof window !== 'undefined') {
+    window.CMMANDS = { 
+        CommandsRuntime, 
+        initializeCMMANDS,
+        getInstance: () => cmmandsInstance
+    };
+}
+if (typeof global !== 'undefined') {
+    global.CMMANDS = { 
+        CommandsRuntime, 
+        initializeCMMANDS,
+        getInstance: () => cmmandsInstance
+    };
 }
 
 // Auto-initialize if loaded via script tag
@@ -1582,6 +1595,33 @@ console.log('   cmmands.executeCommand("command-name");');
 console.log('   cmmands.getCommands(); // See all commands');
 console.log('   cmmands.getTrackedFiles(); // See tracked files\n');
 
-// Export the instance for immediate use
-export { CommandsRuntime, initializeCMMANDS };
-export default { CommandsRuntime, initializeCMMANDS, getInstance: () => cmmandsInstance };
+// ES6 Module compatibility - safe implementation that works everywhere
+try {
+    // Check for ES6 module environment (no window, no global, no exports)
+    const isES6Module = (function() {
+        try {
+            // In true ES6 modules, 'this' is undefined at global scope
+            // and export statements would be valid
+            return typeof window === 'undefined' && 
+                   typeof global === 'undefined' && 
+                   typeof module === 'undefined' && 
+                   typeof exports === 'undefined' && 
+                   typeof self === 'undefined';
+        } catch (e) {
+            return false;
+        }
+    })();
+    
+    if (isES6Module && typeof module !== 'undefined' && module.exports) {
+        // Provide ES6 module default export compatibility
+        module.exports.default = { 
+            CommandsRuntime, 
+            initializeCMMANDS,
+            getInstance: () => cmmandsInstance
+        };
+    }
+} catch (e) {
+    // Not in ES6 module environment - that's okay!
+    // The universal exports above already made CMMANDS available globally
+    // console.log('📦 CMMANDS loaded in non-module environment (regular script tag)');
+}
